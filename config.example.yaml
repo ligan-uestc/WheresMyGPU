@@ -87,35 +87,28 @@ alert:
 
 
 # -----------------------------------------------------------------------------
-#  要监控的服务器（可以多于两台，复制一段即可）
+#  要监控的服务器
+#
+#  这里故意留空 —— 仓库里不包含任何服务器信息。
+#  运行前至少要加一台，否则启动时会提示 servers 为空。
+#  两种添加方式：
+#    1) 打开图形界面（run_gui.bat）→「服务器」页 → 添加
+#    2) 照着下面的字段名自己写一段
+#
+#  可用字段：
+#    name            唯一标识，用于状态文件和日志（必填）
+#    label           界面显示名，可中文
+#    host            SSH 主机名或 IP（必填）
+#    port            SSH 端口，默认 22
+#    user            SSH 用户名，默认 root
+#    password        密码；建议写 ${WHERESMYGPU_PW_1:-} 从环境变量读
+#    key_file        私钥路径（与 password 二选一）
+#    key_passphrase  私钥口令（私钥有加密时用）
+#    password_file   从文件读密码
+#    enabled         是否启用，默认 true
+#    alert           可选：这台服务器单独覆盖上面的阈值
 # -----------------------------------------------------------------------------
-servers:
-  - name: 3090-server-1
-    label: 3090 服务器 1
-    host: 10.0.0.11
-    port: 22
-    user: ubuntu
-    # 方式 A（推荐）：密码放环境变量。设置好后 ${WHERESMYGPU_PW_1:-} 会读到它。
-    #   PowerShell:  setx WHERESMYGPU_PW_1 "你的密码"
-    password: ${WHERESMYGPU_PW_1:-}
-    # 方式 B：直接用密钥登录（需要先把公钥放到服务器的 ~/.ssh/authorized_keys）
-    key_file: C:/Users/you/.ssh/id_rsa
-    # 方式 C：密码写在文件里（只读权限）
-    # password_file: C:/Users/you/.ssh/gpu1.pass
-    enabled: true
-
-    # 这台服务器可以单独覆盖上面的阈值（不需要就整段删掉）
-    # alert:
-    #   min_free_memory_gb: 18
-
-  - name: 3090-server-2
-    label: 3090 服务器 2
-    host: 10.0.0.12
-    port: 22
-    user: ubuntu
-    password: ${WHERESMYGPU_PW_2:-}
-    key_file: C:/Users/you/.ssh/id_rsa
-    enabled: true
+servers: []
 
 
 # -----------------------------------------------------------------------------
@@ -163,15 +156,24 @@ notify:
       headers:
         Authorization: Bearer REPLACE_ME
 
-    # 9) 邮件
+    # 9) 邮件（SMTP）
+    #    身份字段全部留空 —— 仓库里不放任何邮箱地址，运行前自己填。
+    #    smtp_host 填你邮箱服务商的服务器，常见值：
+    #      QQ邮箱 smtp.qq.com      163邮箱 smtp.163.com
+    #      Gmail  smtp.gmail.com   腾讯企业邮 smtp.exmail.qq.com
+    #    smtp_port：SSL 用 465（同时 use_ssl 设 true）；STARTTLS 用 587。
+    #    password 要填「授权码」，不是网页登录密码。
+    #    to 可以写多个收件人，用英文逗号分隔。
     - type: email
       enabled: false
-      smtp_host: smtp.qq.com
+      smtp_host: ""
       smtp_port: 465
-      username: you@qq.com
-      password: ${SMTP_PASSWORD:-}
-      from: you@qq.com
-      to: you@qq.com
+      use_ssl: true
+      starttls: false
+      username: ""
+      password: ""
+      from: ""
+      to: ""
 
     # 10) Server 酱（推送到微信），https://sct.ftqq.com 获取 send_key
     - type: serverchan

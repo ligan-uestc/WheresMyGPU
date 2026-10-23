@@ -89,7 +89,7 @@ def cmd_init(args: argparse.Namespace) -> int:
 
     shutil.copyfile(template, target)
     print(f"已创建配置文件：{target}")
-    print("请编辑其中的 servers 段，填入两台服务器的 SSH 信息，然后运行：")
+    print("servers 段是空的，请先在图形界面里添加服务器，或自己编辑该段，然后运行：")
     print(f"  python -m wheresmygpu --config \"{target}\" --check")
     return 0
 
@@ -113,11 +113,11 @@ def cmd_channels(_args: argparse.Namespace) -> int:
                 "        webhook: https://oapi.dingtalk.com/robot/send?access_token=xxxx",
                 "        keyword: GPU",
                 "      - type: email",
-                "        smtp_host: smtp.qq.com",
+                "        smtp_host: <你的邮箱服务商>",
                 "        smtp_port: 465",
-                "        username: you@qq.com",
-                "        password: ${SMTP_PASSWORD}",
-                "        to: you@qq.com",
+                "        username: \"\"          # 你的完整邮箱地址",
+                "        password: \"\"          # 授权码，不是登录密码",
+                "        to: \"\"                # 收件人",
             ]
         )
     )

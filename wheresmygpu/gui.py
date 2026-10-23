@@ -117,7 +117,7 @@ _ANGLE_RE = re.compile(r"<([^<>]+)>\s*$")
 
 
 def _looks_like_email(value: str) -> bool:
-    """Accept `user@host.tld` and also `Display Name <user@host.tld>`.
+    """Accept a bare address and also the `Display Name <address>` form.
 
     SMTP servers reject anything that is not a real address here, which is why
     a bare application name like "WheresMyGPU" comes back as a cryptic 502.
@@ -875,7 +875,7 @@ class WheresMyGPUApp(tk.Tk):
         ttk.Entry(box, textvariable=self.var_smtp_to, width=34).grid(
             row=10, column=1, columnspan=3, sticky="w"
         )
-        _hint(box, "多个收件人用逗号分隔，例如 a@x.com, b@y.com", 11, column=1, span=3)
+        _hint(box, "填完整邮箱地址；多个收件人用英文逗号分隔", 11, column=1, span=3)
 
         actions = ttk.Frame(self.tab_email)
         actions.pack(fill="x")
@@ -1361,7 +1361,7 @@ class WheresMyGPUApp(tk.Tk):
         if not _looks_like_email(user):
             raise ValueError(
                 "「登录账号」要填完整的邮箱地址，现在是「" + user + "」。\n\n"
-                "例如：你的账号@qq.com"
+                "请填完整的邮箱地址"
             )
         if not password:
             raise ValueError("邮件提醒已启用，但「密码 / 授权码」是空的。")
@@ -1371,7 +1371,7 @@ class WheresMyGPUApp(tk.Tk):
         if bad:
             raise ValueError(
                 "「收件人」必须是邮箱地址，这几个不是：" + "、".join(bad) + "\n\n"
-                "多个收件人请用逗号分隔，例如：a@x.com, b@y.com"
+                "多个收件人请用英文逗号分隔"
             )
 
         spec: dict = {

@@ -80,15 +80,7 @@ python -m wheresmygpu
 
 ---
 
-## 已在真实服务器上验证通过
-
-实跑结果：
-
-| 项目 | 服务器 1 | 服务器 2 |
-| --- | --- | --- |
-| 地址 | `10.0.0.11:22` | `10.0.0.12:22` |
-| 驱动版本 | 595.91.07 | 580.178.04 |
-| 显卡 | 8 × RTX 3090 | 8 × RTX 3090 |
+## 已在真实 GPU 服务器上验证通过
 
 连续跑 3 轮，行为完全符合预期：
 
@@ -195,14 +187,14 @@ python -m wheresmygpu
 notify:
   channels:
     - type: email
-      smtp_host: smtp.qq.com    # SMTP 服务器
+      smtp_host: ""    # SMTP 服务器
       smtp_port: 465            # SSL 用 465，STARTTLS 用 587
       use_ssl: true             # 465 端口填 true
       starttls: false           # 587 端口填 true
-      username: you@qq.com      # 登录账号（完整邮箱）
-      password: 你的授权码       # 注意不是网页登录密码
-      to: you@qq.com            # 收件人；多个用 a@x.com, b@y.com
-      from: you@qq.com          # 可省略，默认用 username
+      username: ""      # 登录账号（完整邮箱）
+      password: ""       # 注意不是网页登录密码
+      to: ""            # 收件人；多个用英文逗号分隔
+      from: ""          # 可省略，默认用 username
 
     # 本地再留一份提醒记录（不打扰，建议保留）
     - type: logfile
@@ -236,7 +228,7 @@ python -m wheresmygpu --test-notify
 ```
 正在测试 2 个提醒通道…
 
-  [✓] email            email -> you@qq.com                      2.31s
+  [✓] email            email                      2.31s
   [✓] logfile          logfile -> D:\WheresMyGPU\logs\alerts.log 0.00s
 
 成功 2/2 个通道。
@@ -245,9 +237,9 @@ python -m wheresmygpu --test-notify
 ### 邮件长什么样
 
 ```
-主题: 🎮 GPU 空闲可用了：3090 服务器 2 · GPU 3
+主题: 🎮 GPU 空闲可用了：服务器 2 · GPU 3
 正文:
-  服务器: 3090 服务器 2  (ubuntu@10.0.0.12:22)
+  服务器: 服务器 2
   GPU: #3 NVIDIA GeForce RTX 3090
 
   剩余显存: 23.6 GB / 24 GB (已用 0.0 GB, 0%)
@@ -269,13 +261,13 @@ python -m wheresmygpu --test-notify
 主题: 🎮 16 张 GPU 空闲可用了 · 2 台服务器
 正文:
   本轮检查命中 16 项，已汇总成一封邮件（2026-10-23 11:33:30）
-  涉及服务器: 3090 服务器 1、3090 服务器 2
+  涉及服务器: 服务器 1、服务器 2
 
-  【3090 服务器 1】8 张
+  【服务器 1】8 张
     · GPU #0  RTX 3090 — 剩余 23.6G/24G · 利用率 0% · 显存 0% · 进程 0 · 41°C
     · GPU #1  RTX 3090 — 剩余 23.6G/24G · 利用率 0% · 显存 0% · 进程 0 · 41°C
     …
-  【3090 服务器 2】8 张
+  【服务器 2】8 张
     · GPU #0  RTX 3090 — 剩余 23.6G/24G · 利用率 0% · 显存 0% · 进程 0 · 41°C
     …
 
@@ -324,12 +316,12 @@ python -m wheresmygpu --test-notify
 notify:
   channels:
     - type: email
-      smtp_host: smtp.qq.com
+      smtp_host: ""
       smtp_port: 465
       use_ssl: true
-      username: you@qq.com
-      password: 你的授权码
-      to: you@qq.com
+      username: ""
+      password: ""
+      to: ""
 
     # 电脑前也能立刻注意到
     - type: windows_toast
@@ -411,16 +403,16 @@ ssh:
 
 ```yaml
 servers:
-  - name: 3090-server-1          # 唯一标识，用于状态文件和日志
-    label: 3090 服务器 1          # 显示名（可中文）
-    host: 10.0.0.11
+  - name: server-1          # 唯一标识，用于状态文件和日志
+    label: 服务器 1          # 显示名（可中文）
+    host: ""
     port: 22
-    user: ubuntu
+    user: ""
     enabled: true
     # 三选一（或组合）：
     password: ${WHERESMYGPU_PW_1}   # 推荐：从环境变量读
-    # key_file: C:/Users/You/.ssh/id_rsa
-    # password_file: C:/Users/You/.ssh/gpu1.pass
+    # key_file: ~/.ssh/id_rsa
+    # password_file: ~/.ssh/gpu1.pass
     alert:                       # 可选：这台机器单独覆盖全局阈值
       min_free_memory_gb: 18
 ```
