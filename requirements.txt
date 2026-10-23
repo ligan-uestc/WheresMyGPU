@@ -1,0 +1,10 @@
+# WheresMyGPU 运行依赖
+# 已确认本机 Anaconda (Python 3.11) 中这三项均可用。
+paramiko>=2.8      # SSH 连接（支持密码 + 密钥登录，并复用长连接）
+requests>=2.25     # 所有 HTTP 提醒通道（飞书/钉钉/企微/Webhook/Telegram…）
+PyYAML>=5.4        # 读取 config.yaml
+
+# 说明：
+#   Windows 桌面通知与提示音使用系统自带能力（PowerShell + winsound），
+#   不需要额外安装 win10toast / plyer / winotify。
+#   邮件提醒使用 Python 标准库 smtplib。

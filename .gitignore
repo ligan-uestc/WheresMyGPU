@@ -1,0 +1,50 @@
+# =============================================================================
+#  WheresMyGPU — 什么不该进仓库
+# =============================================================================
+
+# ---- 个人配置：含服务器密码、邮箱授权码，绝对不要提交 ----
+config.yaml
+config.yaml.bak
+*.bak
+*.tmp
+*.pass
+*.pem
+*.key
+id_rsa*
+known_hosts
+
+# ---- 运行时数据：含服务器 IP、GPU 使用历史、别人的进程名 ----
+state.json
+history.jsonl
+history.csv
+logs/
+demo-state.json
+demo-history.jsonl
+demo-history.csv
+demo-alerts.log
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# ---- 编辑器 / 系统 ----
+.vscode/
+.idea/
+*.swp
+*~
+Thumbs.db
+desktop.ini
+.DS_Store

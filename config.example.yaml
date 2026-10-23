@@ -1,0 +1,197 @@
+# =============================================================================
+#  WheresMyGPU 配置文件
+#  持续监控多台 GPU 服务器，在显卡空闲 / 低负载时自动提醒。
+#
+#  快速上手：
+#    1. 填好下面的 servers 段（SSH 连接信息）
+#    2. python -m wheresmygpu --check          # 验证能否连上并读到 GPU
+#    3. python -m wheresmygpu --test-notify    # 验证提醒能不能收到
+#    4. python -m wheresmygpu                  # 开始持续监控
+#
+#  提示：任何字符串里都可以用 ${环境变量} 或 ${环境变量:-默认值} 引用环境变量，
+#        推荐用它来存放密码，避免明文写进配置文件。
+# =============================================================================
+
+app:
+  # 轮询间隔（秒）。5 分钟 = 300。命令行 --interval 5m 可临时覆盖。
+  interval_seconds: 300
+  # 给每次轮询加一点随机抖动（秒），避免所有机器同一秒被唤醒。0 = 不加。
+  jitter_seconds: 0
+  # 日志目录、状态文件、历史记录（相对本配置文件所在目录；也可写绝对路径）
+  log_dir: logs
+  state_file: state.json
+  history_file: history.jsonl
+  history_csv: history.csv
+  # DEBUG / INFO / WARNING / ERROR
+  log_level: INFO
+  # 是否同时把日志打到控制台
+  console: true
+
+
+ssh:
+  # auto = 先试 paramiko，失败自动回退到系统 ssh；也可强制 paramiko / system_ssh
+  # 注意：system_ssh 不支持密码登录，只能用密钥。
+  transport: auto
+  connect_timeout: 20
+  command_timeout: 30
+  keepalive: 30
+  # 单轮内每条命令的重试次数
+  max_retries: 2
+  retry_backoff: 3.0
+  # 复用 SSH 长连接（推荐），避免每次轮询都重新握手
+  reuse_connection: true
+  # 远程 nvidia-smi 的可能位置，按顺序探测
+  nvidia_smi_paths:
+    - nvidia-smi
+    - /usr/bin/nvidia-smi
+    - /usr/local/nvidia/bin/nvidia-smi
+    - /usr/local/bin/nvidia-smi
+    - /opt/nvidia/bin/nvidia-smi
+
+
+# -----------------------------------------------------------------------------
+#  判定阈值：下面所有条件同时满足（逻辑与），才认为这张卡"空闲可用"
+# -----------------------------------------------------------------------------
+alert:
+  # 剩余显存下限（GB）。
+  # ⚠️ 注意：RTX 3090 总显存只有 24GB，"剩余大于 24G"永远不可能成立，
+  #    所以这里用 20G（约等于"基本没人用"）。请按你自己显卡的总容量来设。
+  min_free_memory_gb: 20.0
+  # 可选：按百分比判定，跨不同型号显卡更通用（例如 85 表示剩余 85% 以上）。
+  # 设为 null 表示不启用。两者都写则都要满足。
+  min_free_memory_pct: null
+  # GPU 计算利用率上限（%）。小于等于该值算"空闲"。
+  max_gpu_utilization: 5.0
+  # 显存带宽利用率上限（%）。设为 null 可关闭这项判定。
+  max_memory_utilization: 10.0
+  # 温度上限（℃），null = 不判定
+  max_temperature_c: null
+  # 是否要求完全没有进程（最严格）。一般用不到，靠显存和利用率判断即可。
+  require_no_processes: false
+  # 进程占用显存上限（GB），null = 不判定
+  max_process_memory_gb: null
+
+  # 连续满足几次检查才提醒。2 表示连续两轮（默认 5 分钟一轮 → 约 10 分钟）
+  # 都判定为空闲才发提醒，可有效避免把"两个 kernel 之间的瞬间低占用"误判成空闲。
+  sustained_checks: 2
+  # 同一张卡两次提醒之间的最小间隔（分钟），防止刷屏。0 = 不限制。
+  cooldown_minutes: 60
+  # 已提醒过的空闲卡又被占用时，是否再发一条"已占用"通知
+  notify_on_busy: false
+  # 服务器恢复连接时是否通知
+  notify_on_recovery: true
+  # 服务器连不上时是否通知
+  notify_on_unreachable: true
+  # 连续失败多少次才判定为"连不上"并提醒
+  unreachable_after_failures: 3
+
+
+# -----------------------------------------------------------------------------
+#  要监控的服务器（可以多于两台，复制一段即可）
+# -----------------------------------------------------------------------------
+servers:
+  - name: 3090-server-1
+    label: 3090 服务器 1
+    host: 10.0.0.11
+    port: 22
+    user: ubuntu
+    # 方式 A（推荐）：密码放环境变量。设置好后 ${WHERESMYGPU_PW_1:-} 会读到它。
+    #   PowerShell:  setx WHERESMYGPU_PW_1 "你的密码"
+    password: ${WHERESMYGPU_PW_1:-}
+    # 方式 B：直接用密钥登录（需要先把公钥放到服务器的 ~/.ssh/authorized_keys）
+    key_file: C:/Users/you/.ssh/id_rsa
+    # 方式 C：密码写在文件里（只读权限）
+    # password_file: C:/Users/you/.ssh/gpu1.pass
+    enabled: true
+
+    # 这台服务器可以单独覆盖上面的阈值（不需要就整段删掉）
+    # alert:
+    #   min_free_memory_gb: 18
+
+  - name: 3090-server-2
+    label: 3090 服务器 2
+    host: 10.0.0.12
+    port: 22
+    user: ubuntu
+    password: ${WHERESMYGPU_PW_2:-}
+    key_file: C:/Users/you/.ssh/id_rsa
+    enabled: true
+
+
+# -----------------------------------------------------------------------------
+#  提醒方式：可任意组合，全部同时生效。
+#  运行 `python -m wheresmygpu --channels` 查看所有可用通道。
+#  运行 `python -m wheresmygpu --test-notify` 逐个测试。
+# -----------------------------------------------------------------------------
+notify:
+  channels:
+    # 1) 终端彩色打印（零依赖）
+    - type: console
+
+    # 2) 写入独立的告警文件 logs/alerts.log
+    - type: logfile
+      path: logs/alerts.log
+
+    # 3) Windows 10/11 原生桌面通知（零依赖，无需安装任何东西）
+    - type: windows_toast
+      app_id: WheresMyGPU
+
+    # 4) 提示音（无需盯着屏幕也能注意到）
+    - type: sound
+
+    # 5) 飞书 / Lark 群机器人
+    #    群设置 → 群机器人 → 添加自定义机器人 → 复制 webhook 地址
+    - type: feishu
+      enabled: false
+      webhook: https://open.feishu.cn/open-apis/bot/v2/hook/REPLACE_ME
+
+    # 6) 钉钉群机器人（安全设置里若选了"自定义关键词"，keyword 要填那个词）
+    - type: dingtalk
+      enabled: false
+      webhook: https://oapi.dingtalk.com/robot/send?access_token=REPLACE_ME
+      keyword: GPU
+
+    # 7) 企业微信群机器人
+    - type: wecom
+      enabled: false
+      webhook: https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=REPLACE_ME
+
+    # 8) 通用 Webhook（任何能接 JSON POST 的服务）
+    - type: webhook
+      enabled: false
+      url: https://example.com/hook
+      headers:
+        Authorization: Bearer REPLACE_ME
+
+    # 9) 邮件
+    - type: email
+      enabled: false
+      smtp_host: smtp.qq.com
+      smtp_port: 465
+      username: you@qq.com
+      password: ${SMTP_PASSWORD:-}
+      from: you@qq.com
+      to: you@qq.com
+
+    # 10) Server 酱（推送到微信），https://sct.ftqq.com 获取 send_key
+    - type: serverchan
+      enabled: false
+      send_key: REPLACE_ME
+
+    # 11) Telegram Bot
+    - type: telegram
+      enabled: false
+      bot_token: REPLACE_ME
+      chat_id: REPLACE_ME
+
+    # 12) Slack / Discord
+    - type: slack
+      enabled: false
+      webhook: https://hooks.slack.com/services/REPLACE_ME
+    - type: discord
+      enabled: false
+      webhook: https://discord.com/api/webhooks/REPLACE_ME
+
+    # 13) 兜底：执行任意本地命令，事件通过 WHERESMYGPU_* 环境变量传入
+    # - type: command
+    #   command: python D:/WheresMyGPU/my_handler.py

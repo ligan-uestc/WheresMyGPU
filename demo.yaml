@@ -1,0 +1,48 @@
+# 演示配置：指向本机运行的两个「模拟 GPU 服务器」，用于在没有真实机器时
+# 验证整套流程（SSH -> nvidia-smi -> 判定 -> 提醒）。
+#
+# 用法：
+#   python -m wheresmygpu.mock_server --port 2222 --gpus 2 --busy 2 --idle-after 30
+#   python -m wheresmygpu.mock_server --port 2223 --gpus 2 --busy 1
+#   python -m wheresmygpu --config demo.yaml --interval 10s
+app:
+  interval_seconds: 10
+  state_file: logs/demo-state.json
+  history_file: logs/demo-history.jsonl
+  history_csv: logs/demo-history.csv
+  log_dir: logs
+  log_level: INFO
+  console: true
+
+ssh:
+  transport: paramiko
+  connect_timeout: 10
+  command_timeout: 15
+  max_retries: 1
+
+alert:
+  min_free_memory_gb: 20.0
+  max_gpu_utilization: 5.0
+  max_memory_utilization: 10.0
+  sustained_checks: 1
+  cooldown_minutes: 1
+
+servers:
+  - name: mock-gpu-1
+    label: 模拟服务器 1
+    host: 127.0.0.1
+    port: 2222
+    user: ubuntu
+    password: wheresmygpu-demo
+  - name: mock-gpu-2
+    label: 模拟服务器 2
+    host: 127.0.0.1
+    port: 2223
+    user: ubuntu
+    password: wheresmygpu-demo
+
+notify:
+  channels:
+    - type: console
+    - type: logfile
+      path: logs/demo-alerts.log
